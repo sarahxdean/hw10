@@ -11,7 +11,7 @@ import java.awt.*;
  *
  */
 public class Brick extends GameObj {
-	public static final int SIZE = 70;
+	public static final int SIZE = 77;
 	public static final int DEPTH = 10;
 	public static final int INIT_VEL_X = 0;
 	public static final int INIT_VEL_Y = 0;

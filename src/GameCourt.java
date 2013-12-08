@@ -29,16 +29,26 @@ public class GameCourt extends JPanel {
 	
 	public boolean playing = false;  // whether the game is running
 	private JLabel status;       // Current status text (i.e. Running...)
+	String instr_text = "Welcome to this game!";
+
+
+	JLabel instr =
+		      new JLabel(instr_text, JLabel.CENTER);
+
 
 	// Game constants
-	public static final int COURT_WIDTH = 300;
-	public static final int COURT_HEIGHT = 300;
+	public boolean instr_open = false;
+	public static final int COURT_WIDTH = 350;
+	public static final int COURT_HEIGHT = 350;
 	public static final int COURT_DEPTH = 150;
 	public static final int SQUARE_VELOCITY = 8;
+	int mapped_o = 175+(int)(-175/(1+COURT_DEPTH/200.0));
+	int mapped_w = (int)(COURT_WIDTH/(1+COURT_DEPTH/200.0));
+	int mapped_h = (int)(COURT_HEIGHT/(1+COURT_DEPTH/200.0));
 	// Update interval for timer in milliseconds 
 	public static final int INTERVAL = 35; 
-	int n = COURT_HEIGHT / Brick.SIZE;
-	int m = COURT_WIDTH / Brick.SIZE;
+	int n = COURT_HEIGHT / (Brick.SIZE+10);
+	int m = COURT_WIDTH / (Brick.SIZE+10);
 
 	public GameCourt(JLabel status){
 		// creates border around the court area, JComponent method
@@ -98,16 +108,16 @@ public class GameCourt extends JPanel {
 		bricks = new Brick[n+1][m+1][3];
 		
 		for (int k = 0; k < 3; k ++) {
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= m; j++) {
-				bricks[i][j][k] = new Brick((50+Brick.SIZE/2)*j,(50+Brick.SIZE/2)*i, 
-						(3+Brick.DEPTH)*k, COURT_WIDTH, COURT_HEIGHT, COURT_DEPTH);
+			for (int i = 0; i <= n; i++) {
+				for (int j = 0; j <= m; j++) {
+					bricks[i][j][k] = new Brick((10+Brick.SIZE)*j,(10+Brick.SIZE)*i, 
+							(3+Brick.DEPTH)*k, COURT_WIDTH, COURT_HEIGHT, COURT_DEPTH);
+				}
 			}
-		}
 		}
 
 		playing = true;
-		status.setText("Running...");
+		status.setText("Playing...");
 
 		// Make sure that this component has the keyboard focus
 		requestFocusInWindow();
@@ -165,6 +175,24 @@ public class GameCourt extends JPanel {
 	@Override 
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
+		
+		if(instr_open)
+		{
+			
+		} else {
+		
+		Color oldColor = g.getColor();
+		g.setColor(Color.GRAY);
+
+		g.drawRect(mapped_o, 
+				mapped_o, mapped_w, 
+				mapped_h);
+		g.drawLine(0, 0, mapped_o, mapped_o);
+		g.drawLine(0, COURT_HEIGHT, mapped_o, mapped_o+mapped_h);
+		g.drawLine(COURT_WIDTH, 0, mapped_o+mapped_w, mapped_o);
+		g.drawLine(COURT_WIDTH, COURT_HEIGHT, mapped_o+mapped_w, mapped_o+mapped_h);
+		//g.drawRect(0, 0, 100, 100);
+		g.setColor(oldColor);
 		for (int k = 0; k < 3; k ++) {
 		for (int i = 0; i <= n-1; i++) {
 			for (int j = 0; j <= m-1; j++) {
@@ -176,6 +204,7 @@ public class GameCourt extends JPanel {
 		if (snitch.pos_z <= 110) snitch.draw(g);
 		//snitch2.draw(g);
 		square.draw(g);
+		}
 		
 	}
 
@@ -183,4 +212,22 @@ public class GameCourt extends JPanel {
 	public Dimension getPreferredSize(){
 		return new Dimension(COURT_WIDTH,COURT_HEIGHT);
 	}
+	
+	public void instructions(){
+		if (instr_open){
+			this.remove(instr);
+			playing = true;
+			status.setText("Playing...");
+			instr_open = false;
+		} else
+		{
+			playing = false;
+			status.setText("Instructions open, game paused");
+        	this.add(instr, BorderLayout.CENTER);
+			instr_open=true;
+			repaint();
+		}
+	}
 }
+
+

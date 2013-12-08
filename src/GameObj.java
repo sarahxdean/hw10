@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+
 /** An object in the game. 
  *
  *  Game objects exist in the game court. They have a position, 
@@ -95,6 +96,7 @@ public class GameObj {
 	}
 	
 	public int map(int x){
+		//Map3d.dimesion(x, pos_z);
 		return (int)(x/(1+pos_z/200.0));
 	}
 	
@@ -104,8 +106,8 @@ public class GameObj {
 		mapped_width = map(width); //(int)((float)width * (1.0 - ((pos_z / 2.0) / 100.0)));
 		mapped_height = map(height);//(int)((float)height * (1.0 - pos_z / 2.0 / 100.0));
 
-		mapped_x = 150 + map(pos_x - 150);
-	    mapped_y = 150 + map(pos_y - 150);
+		mapped_x = 175 + map(pos_x - 175);
+	    mapped_y = 175 + map(pos_y - 175);
 	}
 
 	/**

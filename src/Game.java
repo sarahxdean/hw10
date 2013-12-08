@@ -26,7 +26,7 @@ public class Game implements Runnable {
 		  // Status panel
         final JPanel status_panel = new JPanel();
         frame.add(status_panel, BorderLayout.SOUTH);
-        final JLabel status = new JLabel("Running...");
+        final JLabel status = new JLabel("Playing...");
         status_panel.add(status);
 
         // Main playing area
@@ -42,13 +42,21 @@ public class Game implements Runnable {
         // an instance of ActionListener with its actionPerformed() 
         // method overridden. When the button is pressed,
         // actionPerformed() will be called.
-        final JButton reset = new JButton("Reset");
+        final JButton reset = new JButton("Restart");
         reset.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     court.reset();
                 }
             });
         control_panel.add(reset);
+        
+        final JButton instructions = new JButton("Instructions");
+        instructions.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                	court.instructions();
+                }
+            });
+        control_panel.add(instructions);
 
         // Put the frame on the screen
         frame.pack();
