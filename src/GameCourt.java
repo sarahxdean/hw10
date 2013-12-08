@@ -6,6 +6,7 @@
 
 import java.awt.*;
 import java.awt.event.*;
+
 import javax.swing.*;
 
 /**
@@ -24,7 +25,7 @@ public class GameCourt extends JPanel {
 	private Square square;          // the Black Square, keyboard control
 	private Circle snitch;          // the Golden Snitch, bounces
 	//private Circle snitch2;
-	private Brick[][] bricks;          // the Poison Mushroom, doesn't move
+	private Brick[][][] bricks;          // the Poison Mushroom, doesn't move
 	
 	public boolean playing = false;  // whether the game is running
 	private JLabel status;       // Current status text (i.e. Running...)
@@ -36,8 +37,8 @@ public class GameCourt extends JPanel {
 	public static final int SQUARE_VELOCITY = 8;
 	// Update interval for timer in milliseconds 
 	public static final int INTERVAL = 35; 
-	int n = COURT_HEIGHT / (10+Brick.SIZE/2);
-	int m = COURT_WIDTH / (10+Brick.SIZE/2);
+	int n = COURT_HEIGHT / Brick.SIZE;
+	int m = COURT_WIDTH / Brick.SIZE;
 
 	public GameCourt(JLabel status){
 		// creates border around the court area, JComponent method
@@ -94,16 +95,16 @@ public class GameCourt extends JPanel {
 		//snitch2 = new Circle(170,40,100,COURT_WIDTH, COURT_HEIGHT, COURT_DEPTH);
 		
 
-		bricks = new Brick[n+1][m+1];
+		bricks = new Brick[n+1][m+1][3];
 		
-		//for (int k = 0; k < 6; k ++) {
+		for (int k = 0; k < 3; k ++) {
 		for (int i = 0; i <= n; i++) {
 			for (int j = 0; j <= m; j++) {
-				bricks[i][j] = new Brick(5+(10+Brick.SIZE/2)*j,5+(10+Brick.SIZE/2)*i, 
-						(3+Brick.DEPTH), COURT_WIDTH, COURT_HEIGHT, COURT_DEPTH);
+				bricks[i][j][k] = new Brick((50+Brick.SIZE/2)*j,(50+Brick.SIZE/2)*i, 
+						(3+Brick.DEPTH)*k, COURT_WIDTH, COURT_HEIGHT, COURT_DEPTH);
 			}
 		}
-		//}
+		}
 
 		playing = true;
 		status.setText("Running...");
@@ -131,21 +132,23 @@ public class GameCourt extends JPanel {
 			// ...and the paddle
 			snitch.bounce(snitch.hitObj(square));
 			boolean bounced = false;
-			//for (int k = 0; k < 6; k ++) {
+			for (int k = 0; k < 3; k ++) {
 			for (int i = 0; i <= n-1; i++) {
 				for (int j = 0; j <= m-1; j++) {
-					bounced = snitch.bounce(snitch.hitObj(bricks[i][j]));
-					if (bounced) break;
+					if (bricks[i][j][k].isAlive){
+					bounced = snitch.bounce(snitch.hitObj(bricks[i][j][k]));
+					if (bounced) bricks[i][j][k].isAlive = false;
+					}
 				}
-				if (bounced) break;
+				//if (bounced) break;
 			}
-			//if (bounced) break;
-			//}
+			if (bounced) break;
+			}
 			
 			//snitch2.bounce(snitch2.hitObj(square));
 		
 			//check for the game end conditions
-			if (snitch.pos_z < 1) { 
+			if (snitch.pos_z < -5) { 
 				playing = false;
 				status.setText("You lose!");
 			}
@@ -162,15 +165,15 @@ public class GameCourt extends JPanel {
 	@Override 
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		//for (int k = 0; k < 6; k ++) {
+		for (int k = 0; k < 3; k ++) {
 		for (int i = 0; i <= n-1; i++) {
 			for (int j = 0; j <= m-1; j++) {
-				bricks[i][j].draw(g);
-				if (snitch.pos_z > bricks[i][j].pos_z) snitch.draw(g);
+				bricks[i][j][k].draw(g);
+				if (snitch.pos_z > bricks[i][j][k].pos_z) snitch.draw(g);
 			}
 		}
-		//}
-		if (snitch.pos_z <= 100) snitch.draw(g);
+		}
+		if (snitch.pos_z <= 110) snitch.draw(g);
 		//snitch2.draw(g);
 		square.draw(g);
 		

@@ -31,13 +31,14 @@ public class Square extends GameObj {
     @Override
     public void draw(Graphics g) {
         g.setColor(new Color(0, 0,0, 200 ));
-        int mapped_width;
+        /*int mapped_width;
 		int mapped_height;
 		mapped_width =(int)((float)width * (1.0 - ((pos_z / 2.0) / 100.0)));
 		mapped_height = (int)((float)height * (1.0 - pos_z / 2.0 / 100.0));
 		int mapped_x = pos_x + (width*pos_z)/400;
 		int mapped_y = pos_y + (height*pos_z)/400;
-        g.fillRect(mapped_x, mapped_y, mapped_width, mapped_height); 
+        g.fillRect(mapped_x, mapped_y, mapped_width, mapped_height); */
+        g.fillRect(mapped_x, mapped_y, mapped_width, mapped_height);
     }
 
 }

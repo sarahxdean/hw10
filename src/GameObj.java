@@ -5,6 +5,7 @@
  */
 
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
 
 /** An object in the game. 
@@ -25,7 +26,15 @@ public class GameObj {
 	public int pos_x; 
 	public int pos_y;
 	public int pos_z;
+	Point backwall_bounce = new Point(0,0);
+	int hit_count = 0;
+	
+	int mapped_x;
+	int mapped_y;
 
+	public int mapped_width;
+	public int mapped_height;
+	
 	/** Size of object, in pixels */
 	public int width;
 	public int height;
@@ -58,6 +67,8 @@ public class GameObj {
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
+
+		updateMap();
 		
 		// take the width and height into account when setting the 
 		// bounds for the upper left corner of the object.
@@ -76,8 +87,25 @@ public class GameObj {
 		pos_x += v_x;
 		pos_y += v_y;
 		pos_z += v_z;
+		//v_z += -.5;
+		
+		updateMap();
 
 		clip();
+	}
+	
+	public int map(int x){
+		return (int)(x/(1+pos_z/200.0));
+	}
+	
+	public void updateMap(){
+		//int z = pos_z;
+		//if (pos_z == 0) z=1;
+		mapped_width = map(width); //(int)((float)width * (1.0 - ((pos_z / 2.0) / 100.0)));
+		mapped_height = map(height);//(int)((float)height * (1.0 - pos_z / 2.0 / 100.0));
+
+		mapped_x = 150 + map(pos_x - 150);
+	    mapped_y = 150 + map(pos_y - 150);
 	}
 
 	/**
@@ -92,7 +120,7 @@ public class GameObj {
 		if (pos_y < 0) pos_y = 0;
 		else if (pos_y > max_y) pos_y = max_y;
 		
-		if (pos_z < 0) pos_z = 0;
+		if (pos_z < -6) pos_z = -6;
 		else if (pos_z > max_z) pos_z = max_z;
 	}
 
@@ -107,10 +135,10 @@ public class GameObj {
 	 * @return whether this object intersects the other object.
 	 */
 	public boolean intersects(GameObj obj){
-		return (pos_x + width >= obj.pos_x
-				&& pos_y + height >= obj.pos_y
-				&& obj.pos_x + obj.width >= pos_x 
-				&& obj.pos_y + obj.height >= pos_y
+		return (mapped_x + mapped_width >= obj.mapped_x
+				&& mapped_y + mapped_height >= obj.mapped_y
+				&& obj.mapped_x + obj.mapped_width >= pos_x 
+				&& obj.mapped_y + obj.mapped_height >= mapped_y
 				&& obj.pos_z == pos_z);
 	}
 
@@ -128,17 +156,17 @@ public class GameObj {
 	 * @return whether an intersection will occur.
 	 */
 	public boolean willIntersect(GameObj obj){
-		int next_x = pos_x + v_x;
-		int next_y = pos_y + v_y;
-		int next_obj_x = obj.pos_x + obj.v_x;
-		int next_obj_y = obj.pos_y + obj.v_y;
+		int next_x = mapped_x + v_x;
+		int next_y = mapped_y + v_y;
+		int next_obj_x = obj.mapped_x + obj.v_x;
+		int next_obj_y = obj.mapped_y + obj.v_y;
 		int next_z = pos_z + v_z;
 		int next_obj_z = obj.pos_z + obj.v_z;
-		return (next_x + width >= next_obj_x
-				&& next_y + height >= next_obj_y
+		return (next_x + mapped_width >= next_obj_x
+				&& next_y + mapped_height >= next_obj_y
 				&& next_z + depth >= next_obj_z
-				&& next_obj_x + obj.width >= next_x 
-				&& next_obj_y + obj.height >= next_y
+				&& next_obj_x + obj.mapped_width >= next_x 
+				&& next_obj_y + obj.mapped_height >= next_y
 				&& next_obj_z + obj.depth >= next_z);
 	}
 
@@ -157,7 +185,14 @@ public class GameObj {
 		case IN: v_z = -Math.abs(v_z); System.out.println("in"); break;*/
 		case VERTICAL:	v_y = -v_y; break;
 		case HORIZONTAL:	v_x = -v_x; break;
-		case DEPTH:	v_z = -v_z; break;
+		case DEPTH:	
+			v_z = -v_z; 
+			if (hit_count > 1) {
+				v_x=-v_x;
+				v_y=-v_y;
+				hit_count = 0;
+			}
+			break;
 		}
 		return true;
 	}
@@ -169,18 +204,28 @@ public class GameObj {
 	 * @return direction of impending wall, null if all clear.
 	 */
 	public Direction hitWall() {
-		if (pos_x + v_x < 0)
+		if (150 + map(pos_x + v_x - 150) < 150 + map(0 - 150))
 			return Direction.HORIZONTAL;
-		else if (pos_x + v_x > max_x)
+		else if (150 + map(pos_x + v_x - 150) > 150 + map(max_x - 150))
 			return Direction.HORIZONTAL;
-		if (pos_y + v_y < 0)
+		if (150 + map(pos_y + v_y - 150) < 150 + map(0 - 150))
 			return Direction.VERTICAL;
-		else if (pos_y + v_y > max_y)
+		else if (150 + map(pos_y + v_y - 150) > 150 + map(max_y- 150))
 			return Direction.VERTICAL;
-		//else if (pos_z + v_z < 0)
-			//return Direction.OUT;
-		else if (pos_z + v_z > max_z)
+		else if (pos_z + v_z < 0)
 			return Direction.DEPTH;
+		else if (pos_z + v_z > max_z) {
+			Point currPos = new Point (pos_x, pos_y);
+			if (currPos.equals(backwall_bounce)){
+				hit_count ++;	
+			} else {
+				hit_count = 0;
+			}
+			System.out.println(hit_count);
+			System.out.println(currPos.toString());
+			backwall_bounce = currPos;
+			return Direction.DEPTH;
+		}
 		else return null;
 	}
 
@@ -198,14 +243,14 @@ public class GameObj {
 			//double dy = other.pos_y + other.height/2.0 - (pos_y + height/2.0);
 			//double dz = other.pos_z + other.depth/2.0 - (pos_z + depth/2.0);
 			
-			Rectangle rxy_other = new Rectangle(other.pos_x, other.pos_y, other.width, other.height);
-			Rectangle rxy = new Rectangle(pos_x, pos_y, width, height);
+			Rectangle rxy_other = new Rectangle(other.mapped_x, other.mapped_y, other.mapped_width, other.mapped_height);
+			Rectangle rxy = new Rectangle(mapped_x, mapped_y, mapped_width, mapped_height);
 			
-			Rectangle rxz_other = new Rectangle(other.pos_x, other.pos_z, other.width, other.depth);
-			Rectangle rxz = new Rectangle(pos_x, pos_z, width, depth);
+			Rectangle rxz_other = new Rectangle(other.mapped_x, other.pos_z, other.mapped_width, other.depth);
+			Rectangle rxz = new Rectangle(mapped_x, pos_z, mapped_width, depth);
 			
-			Rectangle rzy_other = new Rectangle(other.pos_z, other.pos_y, other.depth, other.height);
-			Rectangle rzy = new Rectangle(pos_z, pos_y, depth, height);
+			Rectangle rzy_other = new Rectangle(other.pos_z, other.mapped_y, other.depth, other.mapped_height);
+			Rectangle rzy = new Rectangle(pos_z, mapped_y, depth, mapped_height);
 			
 			//if (dz < 0){
 			//	return Direction.OUT;
