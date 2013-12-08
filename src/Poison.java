@@ -29,7 +29,7 @@ public class Poison extends GameObj {
 	 
 	 public Poison(int courtWidth, int courtHeight) {
 		super(INIT_VEL_X, INIT_VEL_Y, 0, INIT_X, INIT_Y, 0,
-				SIZE, SIZE, courtWidth, courtHeight, courtWidth);
+				SIZE, SIZE,SIZE, courtWidth, courtHeight, courtWidth);
 		try {
 			if (img == null) {
 				img = ImageIO.read(new File(img_file));

@@ -13,5 +13,5 @@
  * the possible cases of the input to the enum cases)
  */
 public enum Direction {
-	UP, DOWN, LEFT, RIGHT, IN, OUT;
+	VERTICAL, HORIZONTAL, DEPTH;
 }

@@ -5,6 +5,7 @@
  */
 
 import java.awt.Graphics;
+import java.awt.Rectangle;
 
 /** An object in the game. 
  *
@@ -28,6 +29,7 @@ public class GameObj {
 	/** Size of object, in pixels */
 	public int width;
 	public int height;
+	public int depth;
 	
 	/** Velocity: number of pixels to move every time move() is called */
 	public int v_x;
@@ -46,7 +48,7 @@ public class GameObj {
 	 * Constructor
 	 */
 	public GameObj(int v_x, int v_y, int v_z, int pos_x, int pos_y, int pos_z, 
-		int width, int height, int court_width, int court_height, int court_depth){
+		int width, int height, int depth, int court_width, int court_height, int court_depth){
 		this.v_x = v_x;
 		this.v_y = v_y;
 		this.v_z = v_z;
@@ -55,6 +57,7 @@ public class GameObj {
 		this.pos_z = pos_z;
 		this.width = width;
 		this.height = height;
+		this.depth = depth;
 		
 		// take the width and height into account when setting the 
 		// bounds for the upper left corner of the object.
@@ -133,25 +136,30 @@ public class GameObj {
 		int next_obj_z = obj.pos_z + obj.v_z;
 		return (next_x + width >= next_obj_x
 				&& next_y + height >= next_obj_y
+				&& next_z + depth >= next_obj_z
 				&& next_obj_x + obj.width >= next_x 
 				&& next_obj_y + obj.height >= next_y
-				&& next_obj_z == next_z);
+				&& next_obj_z + obj.depth >= next_z);
 	}
 
 	
 	/** Update the velocity of the object in response to hitting
 	 *  an obstacle in the given direction. If the direction is
 	 *  null, this method has no effect on the object. */
-	public void bounce(Direction d) {
-		if (d == null) return;
+	public boolean bounce(Direction d) {
+		if (d == null) return false;
 		switch (d) {
-		case UP:    v_y = Math.abs(v_y); break;  
-		case DOWN:  v_y = -Math.abs(v_y); break;
-		case LEFT:  v_x = Math.abs(v_x); break;
-		case RIGHT: v_x = -Math.abs(v_x); break;
-		case OUT: v_z = Math.abs(v_z); System.out.println(v_z); break;
-		case IN: v_z = -Math.abs(v_z); System.out.println(v_z); break;
+		/*case UP:    v_y = Math.abs(v_y); System.out.println("up"); break;  
+		case DOWN:  v_y = -Math.abs(v_y); System.out.println("dn"); break;
+		case LEFT:  v_x = Math.abs(v_x); System.out.println("lf"); break;
+		case RIGHT: v_x = -Math.abs(v_x); System.out.println("rt"); break;
+		case OUT: v_z = Math.abs(v_z); System.out.println("out"); break;
+		case IN: v_z = -Math.abs(v_z); System.out.println("in"); break;*/
+		case VERTICAL:	v_y = -v_y; break;
+		case HORIZONTAL:	v_x = -v_x; break;
+		case DEPTH:	v_z = -v_z; break;
 		}
+		return true;
 	}
 	
 	/** Determine whether the game object will hit a 
@@ -162,17 +170,17 @@ public class GameObj {
 	 */
 	public Direction hitWall() {
 		if (pos_x + v_x < 0)
-			return Direction.LEFT;
+			return Direction.HORIZONTAL;
 		else if (pos_x + v_x > max_x)
-			return Direction.RIGHT;
+			return Direction.HORIZONTAL;
 		if (pos_y + v_y < 0)
-			return Direction.UP;
+			return Direction.VERTICAL;
 		else if (pos_y + v_y > max_y)
-			return Direction.DOWN;
+			return Direction.VERTICAL;
 		//else if (pos_z + v_z < 0)
 			//return Direction.OUT;
 		else if (pos_z + v_z > max_z)
-			return Direction.IN;
+			return Direction.DEPTH;
 		else return null;
 	}
 
@@ -185,22 +193,124 @@ public class GameObj {
 	public Direction hitObj(GameObj other) {
 
 		if (this.willIntersect(other)) {
-			double dx = other.pos_x + other.width /2 - (pos_x + width /2);
-			double dy = other.pos_y + other.height/2 - (pos_y + height/2);
+			//System.out.println("going to intersect");
+			//double dx = other.pos_x + other.width /2.0 - (pos_x + width /2.0);
+			//double dy = other.pos_y + other.height/2.0 - (pos_y + height/2.0);
+			//double dz = other.pos_z + other.depth/2.0 - (pos_z + depth/2.0);
+			
+			Rectangle rxy_other = new Rectangle(other.pos_x, other.pos_y, other.width, other.height);
+			Rectangle rxy = new Rectangle(pos_x, pos_y, width, height);
+			
+			Rectangle rxz_other = new Rectangle(other.pos_x, other.pos_z, other.width, other.depth);
+			Rectangle rxz = new Rectangle(pos_x, pos_z, width, depth);
+			
+			Rectangle rzy_other = new Rectangle(other.pos_z, other.pos_y, other.depth, other.height);
+			Rectangle rzy = new Rectangle(pos_z, pos_y, depth, height);
+			
+			//if (dz < 0){
+			//	return Direction.OUT;
+			//} else {
+			//	return Direction.IN;
+			//}
 
+			Direction[] directions = new Direction[3];
+			int i=0;
+			
+			Rectangle intersection = rxy.getBounds().intersection(rxy_other.getBounds());
+			if (intersection.width >= intersection.height) {
+			    directions[i] = Direction.VERTICAL;
+			    i++;
+			} else if (intersection.height >= intersection.width) {
+				directions[i] = Direction.HORIZONTAL;
+			    i++;
+			}
+			
+			intersection = rxz.getBounds().intersection(rxz_other.getBounds());
+			if (intersection.width >= intersection.height) {
+			    directions[i] = Direction.DEPTH;
+			    i++;
+			} else if (intersection.height >= intersection.width) {
+				directions[i] = Direction.HORIZONTAL;
+			    i++;
+			}
+			
+			intersection = rzy.getBounds().intersection(rzy_other.getBounds());
+			if (intersection.width >= intersection.height) {
+			    directions[i] = Direction.VERTICAL;
+			    i++;
+			} else if (intersection.height >= intersection.width) {
+				directions[i] = Direction.DEPTH;
+			    i++;
+			}
+			
+			/*//xy plane calculation
 			double theta = Math.atan2(dy, dx);
 			double diagTheta = Math.atan2(height, width);
 
 			if ( -diagTheta <= theta && theta <= diagTheta ) {
-				return Direction.RIGHT;
+				directions[i] = Direction.RIGHT;
+				i++;
 			} else if ( diagTheta <= theta 
 					&& theta <= Math.PI - diagTheta ) {
-				return Direction.DOWN;
+				directions[i] =  Direction.DOWN;
+				i++;
 			} else if ( Math.PI - diagTheta <= theta 
 					|| theta <= diagTheta - Math.PI ) {
-				return Direction.LEFT;
+				directions[i] = Direction.LEFT;
+				i++;
 			} else {
-				return Direction.UP;
+				directions[i] =  Direction.UP;
+				i++;
+			}
+			
+			//xz plane calc
+			theta = Math.atan2(dz, dx);
+			diagTheta = Math.atan2(depth, width);
+
+			if ( -diagTheta <= theta && theta <= diagTheta ) {
+				directions[i] = Direction.RIGHT;
+				i++;
+			} else if ( diagTheta <= theta 
+					&& theta <= Math.PI - diagTheta ) {
+				directions[i] =  Direction.IN;
+				i++;
+			} else if ( Math.PI - diagTheta <= theta 
+					|| theta <= diagTheta - Math.PI ) {
+				directions[i] = Direction.LEFT;
+				i++;
+			} else {
+				directions[i] =  Direction.OUT;
+				i++;
+			}
+			
+			//yz plane calc
+			theta = Math.atan2(dy, dz);
+			diagTheta = Math.atan2(height, depth);
+
+			if ( -diagTheta <= theta && theta <= diagTheta ) {
+				directions[i] = Direction.IN;
+				i++;
+			} else if ( diagTheta <= theta 
+					&& theta <= Math.PI - diagTheta ) {
+				directions[i] =  Direction.DOWN;
+				i++;
+			} else if ( Math.PI - diagTheta <= theta 
+					|| theta <= diagTheta - Math.PI ) {
+				directions[i] = Direction.OUT;
+				i++;
+			} else {
+				directions[i] =  Direction.UP;
+				i++;
+			}*/
+			
+			//find mode -- under assumption that there is a mode
+			System.out.print(directions[0]);
+			System.out.print(directions[1]);
+			System.out.println(directions[2]);
+			if (directions[0] == directions [1]){
+				return directions[0];
+			} else {
+				return directions[2];
 			}
 
 		} else {
