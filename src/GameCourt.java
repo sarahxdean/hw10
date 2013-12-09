@@ -29,6 +29,10 @@ public class GameCourt extends JPanel {
 	
 	public boolean playing = false;  // whether the game is running
 	private JLabel status;       // Current status text (i.e. Running...)
+	private JLabel points;
+	private int pts;
+	private JLabel lives;
+	private int lvs;
 	String instr_text = "Welcome to this game!";
 
 
@@ -50,7 +54,7 @@ public class GameCourt extends JPanel {
 	int n = COURT_HEIGHT / (Brick.SIZE+10);
 	int m = COURT_WIDTH / (Brick.SIZE+10);
 
-	public GameCourt(JLabel status){
+	public GameCourt(JLabel status, JLabel lives, JLabel points){
 		// creates border around the court area, JComponent method
 		setBorder(BorderFactory.createLineBorder(Color.BLACK));
         
@@ -94,6 +98,10 @@ public class GameCourt extends JPanel {
 		});
 
 		this.status = status;
+		this.points = points;
+		pts = 0;
+		this.lives = lives;
+		lvs = 3;
 	}
 
 	/** (Re-)set the state of the game to its initial state.
@@ -117,7 +125,18 @@ public class GameCourt extends JPanel {
 		}
 
 		playing = true;
+		instr_open = false;
+		try {
+			this.remove(instr);
+		} catch (NullPointerException e) {
+			
+		}
 		status.setText("Playing...");
+		
+		lvs = 3;
+		pts = 0;
+		lives.setText("Lives: " + lvs);
+		points.setText("Points: " + pts);
 
 		// Make sure that this component has the keyboard focus
 		requestFocusInWindow();
@@ -147,7 +166,11 @@ public class GameCourt extends JPanel {
 				for (int j = 0; j <= m-1; j++) {
 					if (bricks[i][j][k].isAlive){
 					bounced = snitch.bounce(snitch.hitObj(bricks[i][j][k]));
-					if (bounced) bricks[i][j][k].isAlive = false;
+					if (bounced) {
+						bricks[i][j][k].isAlive = false;
+						pts += 1;
+						points.setText("Score: " + pts);
+					}
 					}
 				}
 				//if (bounced) break;
@@ -158,9 +181,19 @@ public class GameCourt extends JPanel {
 			//snitch2.bounce(snitch2.hitObj(square));
 		
 			//check for the game end conditions
-			if (snitch.pos_z < -5) { 
-				playing = false;
-				status.setText("You lose!");
+			if (snitch.pos_z <= 0) { 
+				
+				lvs += -1;
+				
+				if (lvs < 1) {
+					playing = false;
+					lives.setText("Lives: " + lvs);
+					status.setText("You lose!");
+				} else {
+					lives.setText("Lives: " + lvs);
+				}
+				
+				
 			}
 //			} else if (square.intersects(snitch)) {
 	//			playing = false;
@@ -216,9 +249,15 @@ public class GameCourt extends JPanel {
 	public void instructions(){
 		if (instr_open){
 			this.remove(instr);
-			playing = true;
-			status.setText("Playing...");
+			if (lvs > 0) {
+				playing = true;
+				status.setText("Playing...");
+			} else {
+				status.setText("You lose!");
+			}
+			repaint();
 			instr_open = false;
+			requestFocusInWindow();
 		} else
 		{
 			playing = false;

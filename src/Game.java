@@ -27,10 +27,14 @@ public class Game implements Runnable {
         final JPanel status_panel = new JPanel();
         frame.add(status_panel, BorderLayout.SOUTH);
         final JLabel status = new JLabel("Playing...");
-        status_panel.add(status);
+        status_panel.add(status, BorderLayout.CENTER);
+        final JLabel lives = new JLabel("Lives: 3");
+        status_panel.add(lives, BorderLayout.WEST);
+        final JLabel points = new JLabel("Score: 0");
+        status_panel.add(points, BorderLayout.EAST);
 
         // Main playing area
-        final GameCourt court = new GameCourt(status);
+        final GameCourt court = new GameCourt(status, lives, points);
         frame.add(court, BorderLayout.CENTER);
 
         // Reset button
@@ -54,6 +58,11 @@ public class Game implements Runnable {
         instructions.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                 	court.instructions();
+                	if (court.instr_open) {
+                		instructions.setText("Return to game");
+                	} else {
+                		instructions.setText("Instructions");
+                	}
                 }
             });
         control_panel.add(instructions);
