@@ -27,19 +27,18 @@ public class GameObj {
 	public int pos_x; 
 	public int pos_y;
 	public int pos_z;
-	Point backwall_bounce = new Point(0,0);
-	int hit_count = 0;
-	
-	int mapped_x;
-	int mapped_y;
-
-	public int mapped_width;
-	public int mapped_height;
 	
 	/** Size of object, in pixels */
 	public int width;
 	public int height;
 	public int depth;
+
+	// mapped coords/dimensions for drawing
+	private Map map;
+	public int mapped_width;
+	public int mapped_height;
+	int mapped_x;
+	int mapped_y;
 	
 	/** Velocity: number of pixels to move every time move() is called */
 	public int v_x;
@@ -53,12 +52,18 @@ public class GameObj {
 	public int max_x;
 	public int max_y;
 	public int max_z;
+	
+	// to track the position of bounces. if ball 
+	// is stuck in loop, can take action
+	Point backwall_bounce = new Point(0,0);
+	int hit_count = 0;
 
 	/**
 	 * Constructor
 	 */
 	public GameObj(int v_x, int v_y, int v_z, int pos_x, int pos_y, int pos_z, 
-		int width, int height, int depth, int court_width, int court_height, int court_depth){
+		int width, int height, int depth, int court_width, int court_height, 
+		int court_depth, Map map){
 		this.v_x = v_x;
 		this.v_y = v_y;
 		this.v_z = v_z;
@@ -68,6 +73,7 @@ public class GameObj {
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
+		this.map = map;
 
 		updateMap();
 		
@@ -88,26 +94,19 @@ public class GameObj {
 		pos_x += v_x;
 		pos_y += v_y;
 		pos_z += v_z;
-		//v_z += -.5;
 		
 		updateMap();
 
 		clip();
 	}
 	
-	public int map(int x){
-		//Map3d.dimesion(x, pos_z);
-		return (int)(x/(1+pos_z/200.0));
-	}
-	
+	// updates the mapped coords
 	public void updateMap(){
-		//int z = pos_z;
-		//if (pos_z == 0) z=1;
-		mapped_width = map(width); //(int)((float)width * (1.0 - ((pos_z / 2.0) / 100.0)));
-		mapped_height = map(height);//(int)((float)height * (1.0 - pos_z / 2.0 / 100.0));
+		mapped_width = map.dimension(width, pos_z); 
+		mapped_height = map.dimension(height, pos_z); 
 
-		mapped_x = 175 + map(pos_x - 175);
-	    mapped_y = 175 + map(pos_y - 175);
+		mapped_x = map.point(pos_x, pos_z);
+	    mapped_y = map.point(pos_y, pos_z);
 	}
 
 	/**
@@ -137,11 +136,12 @@ public class GameObj {
 	 * @return whether this object intersects the other object.
 	 */
 	public boolean intersects(GameObj obj){
-		return (mapped_x + mapped_width >= obj.mapped_x
-				&& mapped_y + mapped_height >= obj.mapped_y
-				&& obj.mapped_x + obj.mapped_width >= pos_x 
-				&& obj.mapped_y + obj.mapped_height >= mapped_y
-				&& obj.pos_z == pos_z);
+		return (pos_x + width >= obj.pos_x
+				&& pos_y + height >= obj.pos_y
+				&& pos_z + depth >= obj.pos_z
+				&& obj.pos_x + obj.width >= pos_x 
+				&& obj.pos_y + obj.height >= pos_y
+				&& obj.pos_z + obj.depth >= pos_z);
 	}
 
 	
@@ -158,33 +158,28 @@ public class GameObj {
 	 * @return whether an intersection will occur.
 	 */
 	public boolean willIntersect(GameObj obj){
-		int next_x = mapped_x + v_x;
-		int next_y = mapped_y + v_y;
-		int next_obj_x = obj.mapped_x + obj.v_x;
-		int next_obj_y = obj.mapped_y + obj.v_y;
+		int next_x = pos_x + v_x;
+		int next_y = pos_y + v_y;
+		int next_obj_x = obj.pos_x + obj.v_x;
+		int next_obj_y = obj.pos_y + obj.v_y;
 		int next_z = pos_z + v_z;
 		int next_obj_z = obj.pos_z + obj.v_z;
-		return (next_x + mapped_width >= next_obj_x
-				&& next_y + mapped_height >= next_obj_y
+		return (next_x + width >= next_obj_x
+				&& next_y + height >= next_obj_y
 				&& next_z + depth >= next_obj_z
-				&& next_obj_x + obj.mapped_width >= next_x 
-				&& next_obj_y + obj.mapped_height >= next_y
+				&& next_obj_x + obj.width >= next_x 
+				&& next_obj_y + obj.height >= next_y
 				&& next_obj_z + obj.depth >= next_z);
 	}
 
 	
 	/** Update the velocity of the object in response to hitting
 	 *  an obstacle in the given direction. If the direction is
-	 *  null, this method has no effect on the object. */
+	 *  null, this method has no effect on the object. 
+	 *  if the object is stuck in a bouncing loop, change it up */
 	public boolean bounce(Direction d) {
 		if (d == null) return false;
 		switch (d) {
-		/*case UP:    v_y = Math.abs(v_y); System.out.println("up"); break;  
-		case DOWN:  v_y = -Math.abs(v_y); System.out.println("dn"); break;
-		case LEFT:  v_x = Math.abs(v_x); System.out.println("lf"); break;
-		case RIGHT: v_x = -Math.abs(v_x); System.out.println("rt"); break;
-		case OUT: v_z = Math.abs(v_z); System.out.println("out"); break;
-		case IN: v_z = -Math.abs(v_z); System.out.println("in"); break;*/
 		case VERTICAL:	v_y = -v_y; break;
 		case HORIZONTAL:	v_x = -v_x; break;
 		case DEPTH:	
@@ -206,13 +201,13 @@ public class GameObj {
 	 * @return direction of impending wall, null if all clear.
 	 */
 	public Direction hitWall() {
-		if (150 + map(pos_x + v_x - 150) < 150 + map(0 - 150))
+		if (map.point(pos_x + v_x, pos_z) < map.point(0, pos_z))
 			return Direction.HORIZONTAL;
-		else if (150 + map(pos_x + v_x - 150) > 150 + map(max_x - 150))
+		else if (map.point(pos_x + v_x, pos_z) > map.point(max_x, pos_z))
 			return Direction.HORIZONTAL;
-		if (150 + map(pos_y + v_y - 150) < 150 + map(0 - 150))
+		if (map.point(pos_y + v_y, pos_z) < map.point(0, pos_z))
 			return Direction.VERTICAL;
-		else if (150 + map(pos_y + v_y - 150) > 150 + map(max_y- 150))
+		else if (map.point(pos_y + v_y, pos_z) > map.point(max_y, pos_z))
 			return Direction.VERTICAL;
 		else if (pos_z + v_z < 0)
 			return Direction.DEPTH;
@@ -223,8 +218,6 @@ public class GameObj {
 			} else {
 				hit_count = 0;
 			}
-			System.out.println(hit_count);
-			System.out.println(currPos.toString());
 			backwall_bounce = currPos;
 			return Direction.DEPTH;
 		}
@@ -232,7 +225,8 @@ public class GameObj {
 	}
 
 	/** Determine whether the game object will hit another 
-	 *  object in the next time step. If so, return the direction
+	 *  object in the next time step using intersecting rectangles. 
+	 *  If so, return the orientation
 	 *  of the other object in relation to this game object.
 	 *  
 	 * @return direction of impending object, null if all clear.
@@ -240,29 +234,20 @@ public class GameObj {
 	public Direction hitObj(GameObj other) {
 
 		if (this.willIntersect(other)) {
-			//System.out.println("going to intersect");
-			//double dx = other.pos_x + other.width /2.0 - (pos_x + width /2.0);
-			//double dy = other.pos_y + other.height/2.0 - (pos_y + height/2.0);
-			//double dz = other.pos_z + other.depth/2.0 - (pos_z + depth/2.0);
 			
-			Rectangle rxy_other = new Rectangle(other.mapped_x, other.mapped_y, other.mapped_width, other.mapped_height);
-			Rectangle rxy = new Rectangle(mapped_x, mapped_y, mapped_width, mapped_height);
+			Rectangle rxy_other = new Rectangle(other.pos_x, other.pos_y, other.width, other.height);
+			Rectangle rxy = new Rectangle(pos_x, pos_y, width, height);
 			
-			Rectangle rxz_other = new Rectangle(other.mapped_x, other.pos_z, other.mapped_width, other.depth);
-			Rectangle rxz = new Rectangle(mapped_x, pos_z, mapped_width, depth);
+			Rectangle rxz_other = new Rectangle(other.pos_x, other.pos_z, other.width, other.depth);
+			Rectangle rxz = new Rectangle(pos_x, pos_z, width, depth);
 			
-			Rectangle rzy_other = new Rectangle(other.pos_z, other.mapped_y, other.depth, other.mapped_height);
-			Rectangle rzy = new Rectangle(pos_z, mapped_y, depth, mapped_height);
-			
-			//if (dz < 0){
-			//	return Direction.OUT;
-			//} else {
-			//	return Direction.IN;
-			//}
+			Rectangle rzy_other = new Rectangle(other.pos_z, other.pos_y, other.depth, other.height);
+			Rectangle rzy = new Rectangle(pos_z, pos_y, depth, height);
 
 			Direction[] directions = new Direction[3];
 			int i=0;
 			
+			// xy plane
 			Rectangle intersection = rxy.getBounds().intersection(rxy_other.getBounds());
 			if (intersection.width >= intersection.height) {
 			    directions[i] = Direction.VERTICAL;
@@ -272,6 +257,7 @@ public class GameObj {
 			    i++;
 			}
 			
+			// xz plane
 			intersection = rxz.getBounds().intersection(rxz_other.getBounds());
 			if (intersection.width >= intersection.height) {
 			    directions[i] = Direction.DEPTH;
@@ -281,6 +267,7 @@ public class GameObj {
 			    i++;
 			}
 			
+			// zy plane
 			intersection = rzy.getBounds().intersection(rzy_other.getBounds());
 			if (intersection.width >= intersection.height) {
 			    directions[i] = Direction.VERTICAL;
@@ -290,70 +277,7 @@ public class GameObj {
 			    i++;
 			}
 			
-			/*//xy plane calculation
-			double theta = Math.atan2(dy, dx);
-			double diagTheta = Math.atan2(height, width);
-
-			if ( -diagTheta <= theta && theta <= diagTheta ) {
-				directions[i] = Direction.RIGHT;
-				i++;
-			} else if ( diagTheta <= theta 
-					&& theta <= Math.PI - diagTheta ) {
-				directions[i] =  Direction.DOWN;
-				i++;
-			} else if ( Math.PI - diagTheta <= theta 
-					|| theta <= diagTheta - Math.PI ) {
-				directions[i] = Direction.LEFT;
-				i++;
-			} else {
-				directions[i] =  Direction.UP;
-				i++;
-			}
-			
-			//xz plane calc
-			theta = Math.atan2(dz, dx);
-			diagTheta = Math.atan2(depth, width);
-
-			if ( -diagTheta <= theta && theta <= diagTheta ) {
-				directions[i] = Direction.RIGHT;
-				i++;
-			} else if ( diagTheta <= theta 
-					&& theta <= Math.PI - diagTheta ) {
-				directions[i] =  Direction.IN;
-				i++;
-			} else if ( Math.PI - diagTheta <= theta 
-					|| theta <= diagTheta - Math.PI ) {
-				directions[i] = Direction.LEFT;
-				i++;
-			} else {
-				directions[i] =  Direction.OUT;
-				i++;
-			}
-			
-			//yz plane calc
-			theta = Math.atan2(dy, dz);
-			diagTheta = Math.atan2(height, depth);
-
-			if ( -diagTheta <= theta && theta <= diagTheta ) {
-				directions[i] = Direction.IN;
-				i++;
-			} else if ( diagTheta <= theta 
-					&& theta <= Math.PI - diagTheta ) {
-				directions[i] =  Direction.DOWN;
-				i++;
-			} else if ( Math.PI - diagTheta <= theta 
-					|| theta <= diagTheta - Math.PI ) {
-				directions[i] = Direction.OUT;
-				i++;
-			} else {
-				directions[i] =  Direction.UP;
-				i++;
-			}*/
-			
 			//find mode -- under assumption that there is a mode
-			System.out.print(directions[0]);
-			System.out.print(directions[1]);
-			System.out.println(directions[2]);
 			if (directions[0] == directions [1]){
 				return directions[0];
 			} else {

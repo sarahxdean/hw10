@@ -27,9 +27,9 @@ public class Poison extends GameObj {
 	 
 	 private static BufferedImage img;
 	 
-	 public Poison(int courtWidth, int courtHeight) {
+	 public Poison(int courtWidth, int courtHeight, Map map) {
 		super(INIT_VEL_X, INIT_VEL_Y, 0, INIT_X, INIT_Y, 0,
-				SIZE, SIZE,SIZE, courtWidth, courtHeight, courtWidth);
+				SIZE, SIZE,SIZE, courtWidth, courtHeight, courtWidth, map);
 		try {
 			if (img == null) {
 				img = ImageIO.read(new File(img_file));

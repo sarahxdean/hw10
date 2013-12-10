@@ -15,37 +15,44 @@ import javax.swing.*;
  */
 public class Game implements Runnable {
     public void run(){
-        // NOTE : recall that the 'final' keyword notes inmutability
-		  // even for local variables. 
 
         // Top-level frame in which game components live
-		  // Be sure to change "TOP LEVEL FRAME" to the name of your game
-        final JFrame frame = new JFrame("TOP LEVEL FRAME");
+        final JFrame frame = new JFrame("3d Brick Breaker");
         frame.setLocation(300,300);
 
+        
 		  // Status panel
         final JPanel status_panel = new JPanel();
         frame.add(status_panel, BorderLayout.SOUTH);
+        
+        status_panel.setLayout(new BorderLayout());
+
+        final JPanel text_panel = new JPanel();
+        final JPanel lives_panel = new JPanel();
+        final JPanel score_panel = new JPanel();
+        
+        
         final JLabel status = new JLabel("Playing...");
-        status_panel.add(status, BorderLayout.CENTER);
+        text_panel.add(status);
         final JLabel lives = new JLabel("Lives: 3");
-        status_panel.add(lives, BorderLayout.WEST);
-        final JLabel points = new JLabel("Score: 0");
-        status_panel.add(points, BorderLayout.EAST);
+        lives_panel.add(lives);
+        final JLabel score = new JLabel("Bricks Left: 48");
+        score_panel.add(score);
+        
+        status_panel.add(BorderLayout.LINE_START, lives_panel);
+        status_panel.add(BorderLayout.PAGE_START, text_panel);
+        status_panel.add(BorderLayout.LINE_END,score_panel);
+        
+
 
         // Main playing area
-        final GameCourt court = new GameCourt(status, lives, points);
+        final GameCourt court = new GameCourt(status, lives, score);
         frame.add(court, BorderLayout.CENTER);
 
         // Reset button
         final JPanel control_panel = new JPanel();
         frame.add(control_panel, BorderLayout.NORTH);
 
-        // Note here that when we add an action listener to the reset
-        // button, we define it as an anonymous inner class that is 
-        // an instance of ActionListener with its actionPerformed() 
-        // method overridden. When the button is pressed,
-        // actionPerformed() will be called.
         final JButton reset = new JButton("Restart");
         reset.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
