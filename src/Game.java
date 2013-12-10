@@ -17,11 +17,11 @@ public class Game implements Runnable {
     public void run(){
 
         // Top-level frame in which game components live
-        final JFrame frame = new JFrame("3d Brick Breaker");
+        final JFrame frame = new JFrame("3D Brick Breaker");
         frame.setLocation(300,300);
 
         
-		  // Status panel
+		// Status panel
         final JPanel status_panel = new JPanel();
         frame.add(status_panel, BorderLayout.SOUTH);
         
@@ -30,7 +30,6 @@ public class Game implements Runnable {
         final JPanel text_panel = new JPanel();
         final JPanel lives_panel = new JPanel();
         final JPanel score_panel = new JPanel();
-        
         
         final JLabel status = new JLabel("Playing...");
         text_panel.add(status);
@@ -43,7 +42,6 @@ public class Game implements Runnable {
         status_panel.add(BorderLayout.PAGE_START, text_panel);
         status_panel.add(BorderLayout.LINE_END,score_panel);
         
-
 
         // Main playing area
         final GameCourt court = new GameCourt(status, lives, score);
@@ -61,6 +59,7 @@ public class Game implements Runnable {
             });
         control_panel.add(reset);
         
+        // Instructions button
         final JButton instructions = new JButton("Instructions");
         instructions.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {

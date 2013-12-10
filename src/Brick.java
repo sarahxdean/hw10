@@ -6,10 +6,6 @@
 
 import java.awt.*;
 
-/** A basic game object displayed as a black square, starting in the 
- * upper left corner of the game court.
- *
- */
 public class Brick extends GameObj {
 	public static final int SIZE = 77;
 	public static final int DEPTH = 10;
@@ -21,7 +17,8 @@ public class Brick extends GameObj {
 	public boolean isAlive;
 	
 	
-    public Brick(int x, int y, int z, int courtWidth, int courtHeight, int courtDepth, Map map){
+    public Brick(int x, int y, int z, int courtWidth, int courtHeight, 
+    		int courtDepth, Map map){
         super(INIT_VEL_X, INIT_VEL_Y, INIT_VEL_Z, x, y, INIT_Z + z,
         		SIZE, SIZE, DEPTH, courtWidth, courtHeight, courtDepth, map);
         isAlive = true;

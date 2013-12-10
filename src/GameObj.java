@@ -10,20 +10,10 @@ import java.awt.Rectangle;
 
 
 /** An object in the game. 
- *
- *  Game objects exist in the game court. They have a position, 
- *  velocity, size and bounds. Their velocity controls how they 
- *  move; their position should always be within their bounds.
  */
 public class GameObj {
 
-	/** Current position of the object (in terms of graphics coordinates)
-	 *  
-	 * Coordinates are given by the upper-left hand corner of the object.
-	 * This position should always be within bounds.
-	 *  0 <= pos_x <= max_x 
-	 *  0 <= pos_y <= max_y 
-	 */
+	/** Current position of the object (in terms of graphics coordinates) */
 	public int pos_x; 
 	public int pos_y;
 	public int pos_z;
@@ -34,7 +24,7 @@ public class GameObj {
 	public int depth;
 
 	// mapped coords/dimensions for drawing
-	private Map map;
+	public Map map;
 	public int mapped_width;
 	public int mapped_height;
 	int mapped_x;
@@ -121,7 +111,9 @@ public class GameObj {
 		if (pos_y < 0) pos_y = 0;
 		else if (pos_y > max_y) pos_y = max_y;
 		
-		if (pos_z < -6) pos_z = -6;
+		if (pos_z < -4) {
+			pos_z = -4;
+		}
 		else if (pos_z > max_z) pos_z = max_z;
 	}
 
@@ -209,8 +201,9 @@ public class GameObj {
 			return Direction.VERTICAL;
 		else if (map.point(pos_y + v_y, pos_z) > map.point(max_y, pos_z))
 			return Direction.VERTICAL;
-		else if (pos_z + v_z < 0)
+		else if (pos_z + v_z < -4) {
 			return Direction.DEPTH;
+			}
 		else if (pos_z + v_z > max_z) {
 			Point currPos = new Point (pos_x, pos_y);
 			if (currPos.equals(backwall_bounce)){
